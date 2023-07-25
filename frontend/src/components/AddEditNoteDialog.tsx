@@ -1,9 +1,9 @@
-import React from 'react';
 import { Button, Form, Modal } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { Note } from '../models/note';
 import { NoteInput } from '../api/notes_api';
 import * as NotesApi from '../api/notes_api';
+import TextInputField from './form/TextInputField';
 
 interface AddEditNoteDialogProps {
   noteToEdit?: Note;
@@ -25,10 +25,16 @@ const AddEditNoteDialog: React.FC<AddEditNoteDialogProps> = ({ noteToEdit, onDis
 
   async function onSubmit(input: NoteInput) {
     try {
-      const noteResponse: Note = noteToEdit ? await NotesApi.updateNote(noteToEdit.id, input) : await NotesApi.createNote(input);
+      let noteResponse: Note;
+      if (noteToEdit) {
+        noteResponse = await NotesApi.updateNote(noteToEdit.id, input);
+      } else {
+        noteResponse = await NotesApi.createNote(input);
+      }
       onNoteSaved(noteResponse);
     } catch (error) {
       console.error(error);
+      alert(error);
     }
   }
 
@@ -39,15 +45,16 @@ const AddEditNoteDialog: React.FC<AddEditNoteDialogProps> = ({ noteToEdit, onDis
       </Modal.Header>
       <Modal.Body>
         <Form id="addEditNoteForm" onSubmit={handleSubmit(onSubmit)}>
-          <Form.Group className="mb-3">
-            <Form.Label>Title</Form.Label>
-            <Form.Control type="text" placeholder="Title" isInvalid={!!errors.title} {...register('title', { required: 'Required' })} />
-            <Form.Control.Feedback type="invalid">{errors.title?.message}</Form.Control.Feedback>
-          </Form.Group>
-          <Form.Group className="mb-3">
-            <Form.Label>Text</Form.Label>
-            <Form.Control as="textarea" rows={5} placeholder="Text" {...register('text')} />
-          </Form.Group>
+          <TextInputField
+            name="title"
+            label="Title"
+            type="text"
+            placeholder="Title"
+            register={register}
+            registerOptions={{ required: 'Required' }}
+            error={errors.title}
+          />
+          <TextInputField name="text" label="Text" as="textarea" rows={5} placeholder="Text" register={register} />
         </Form>
       </Modal.Body>
       <Modal.Footer>
